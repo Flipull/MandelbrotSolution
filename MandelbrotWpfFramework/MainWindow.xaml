@@ -1,0 +1,57 @@
+﻿<Window x:Class="MandelbrotWpfFramework.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MandelbrotWpfFramework"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800"
+        Name="Window">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150px"></ColumnDefinition>
+            <ColumnDefinition Width="80px"></ColumnDefinition>
+            <ColumnDefinition Width="80px"></ColumnDefinition>
+            <ColumnDefinition Width="80px"></ColumnDefinition>
+            <ColumnDefinition Width="80px"></ColumnDefinition>
+            <ColumnDefinition Width="80px"></ColumnDefinition>
+            <ColumnDefinition Width="1*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80px"></RowDefinition>
+            <RowDefinition Height="1*"></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical">
+            <TextBox Name="VectorReal" Width="140" Height="30"
+                     Margin="5,5,5,5">
+                0
+            </TextBox>
+            <TextBox Name="VectorImaginary" Width="140" Height="30"
+                     Margin="5,5,5,5">
+                0
+            </TextBox>
+        </StackPanel>
+
+        <Button Grid.Row="0" Grid.Column="1" MaxWidth="70" Height="30"
+            Click="Redraw_Click">
+            Redraw
+        </Button>
+        <TextBox Grid.Row="0" Grid.Column="2" Name="IterationsTarget" Width="70" Height="30"
+                 >
+            100
+        </TextBox>
+
+        <Button Grid.Row="0" Grid.Column="6" MaxWidth="70" MaxHeight="40"
+                Click="Reset_Click">
+            Reset
+        </Button>
+
+
+
+        <Image Name="MandelbrotCanvas" Grid.Row="1" Grid.ColumnSpan="7" 
+                            HorizontalAlignment="Left" Height="0" 
+                            VerticalAlignment="Top" Width="0" Margin="0,0,0,0"/>
+
+    </Grid>
+</Window>
