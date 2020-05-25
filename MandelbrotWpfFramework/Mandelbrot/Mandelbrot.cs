@@ -13,11 +13,11 @@ namespace MandelbrotWpfFramework.Mandelbrot
         public int PlaneWidth { get; private set; }
         public int PlaneHeight { get; private set; }
 
-        public double Zoom { get; private set; } = 1;
+        public double Zoom { get; set; } = 1;
         
-        public List<Zeta> Zetas = new List<Zeta>();
+        public Zeta[,] Zetas;
         public Vector2d Center { get; set; } = VectorFlyWeight.GetVector();
-
+        
         public int IterationsDone { get; private set; }
 
         public Mandelbrot(int width, int height) 
@@ -30,12 +30,11 @@ namespace MandelbrotWpfFramework.Mandelbrot
             PlaneWidth = model.PlaneWidth;
             PlaneHeight = model.PlaneHeight;
             Zoom = model.Zoom;
-            Zetas.AddRange(model.Zetas);
             Center = model.Center;
+            Zetas = new Zeta[model.PlaneWidth, model.PlaneHeight];
         }
 
-        public Mandelbrot(Mandelbrot model, 
-                            int width, int height, 
+        public Mandelbrot(int width, int height, 
                             double zoom = 1, 
                             Vector2d center = null
             )
@@ -44,7 +43,7 @@ namespace MandelbrotWpfFramework.Mandelbrot
             PlaneHeight = height;
             Zoom = zoom;
             Center = (center ?? VectorFlyWeight.GetVector());
-            Zetas.AddRange(model.Zetas);
+            Zetas = new Zeta[width, height];
         }
 
         public Vector2d ImageSpaceToZetaSpace(int x, int y)
@@ -58,7 +57,6 @@ namespace MandelbrotWpfFramework.Mandelbrot
 
         public void Iterate(int iterations = 10)
         {
-            Zetas = new List<Zeta>();
             //calculate viewport so, on zoom 1, shown rectangle is in [(-2,-2)..(2,2)]
             var zoom_ratio = 4 / (double)Math.Min(PlaneWidth, PlaneHeight) / Zoom;
             var o_prime = VectorFlyWeight.GetVector(
@@ -67,9 +65,9 @@ namespace MandelbrotWpfFramework.Mandelbrot
                                );
             
             Parallel.For(0, PlaneWidth,
+                    new ParallelOptions() { MaxDegreeOfParallelism=3 },
                     i =>
                     {
-                        List<Zeta> results = new List<Zeta>();
                         for (var y = 0; y < PlaneHeight; y++)
                         {
                             var result = 
@@ -79,12 +77,8 @@ namespace MandelbrotWpfFramework.Mandelbrot
                                         i * zoom_ratio + o_prime.X, 
                                         y * zoom_ratio + o_prime.Y
                                     ));
+                            Zetas[i, y] = result;
                             result.ZSquaredPlusC(iterations);
-                            results.Add(result);
-                        }
-                        lock (Zetas)
-                        {
-                            Zetas.AddRange(results);
                         }
                     });
             IterationsDone = iterations;
@@ -99,7 +93,46 @@ namespace MandelbrotWpfFramework.Mandelbrot
             VectorFlyWeight.RecycleVector(Center);
             Center = vec;
         }
+///////////////////////
+        public void FloodfillZetaDrawing(System.Windows.Point base_position)
+        {
+            var history = new List<Point>();
+            var processing = new List<Zeta>();
+            var st_x = (int) base_position.X;
+            var st_y = (int) base_position.Y;
+            processing.Add(Zetas[st_x, st_y] );
+            var should_be_drawn = !Zetas[st_x, st_y].isDrawn;
 
+            
+
+            while (processing.Count > 0)
+            {
+                var current_zeta = processing.First();
+                var current_p = current_zeta.P;
+                processing.Remove(current_zeta);
+                
+                if (history.Any(h => h == current_p))
+                    continue;
+
+                current_zeta.isDrawn = should_be_drawn;
+                history.Add(current_p);
+
+                if (current_p.X > 0 &&
+                    current_zeta.IterationsComplete == Zetas[current_p.X - 1, current_p.Y].IterationsComplete)
+                    processing.Add(Zetas[current_p.X - 1, current_p.Y]);
+                if (current_p.X < PlaneWidth - 1 &&
+                    current_zeta.IterationsComplete == Zetas[current_p.X + 1, current_p.Y].IterationsComplete)
+                    processing.Add(Zetas[current_p.X + 1, current_p.Y]);
+                if (current_p.Y > 0 &&
+                    current_zeta.IterationsComplete == Zetas[current_p.X, current_p.Y - 1].IterationsComplete)
+                    processing.Add(Zetas[current_p.X, current_p.Y - 1]);
+                if (current_p.Y < PlaneHeight - 1 &&
+                    current_zeta.IterationsComplete == Zetas[current_p.X, current_p.Y + 1].IterationsComplete)
+                    processing.Add(Zetas[current_p.X, current_p.Y + 1]);
+
+            }
+
+        }
 
 
     }
